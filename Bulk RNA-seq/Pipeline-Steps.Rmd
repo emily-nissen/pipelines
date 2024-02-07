@@ -3,11 +3,9 @@ title: "Bulk RNA-seq Pipeline"
 author: "Emily Nissen"
 date: "2024-02-07"
 output: 
-  html_document:
-      toc: true
-      toc_float: true
   github_document:
-    html_preview: FALSE
+    html_preview: TRUE
+    toc: true
 ---
 
 ```{r setup, include=FALSE}
