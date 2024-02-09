@@ -1,4 +1,4 @@
-# pipelines
+# Pipelines
 
 ## Bulk RNA-seq
 
