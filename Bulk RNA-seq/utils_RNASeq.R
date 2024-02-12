@@ -47,6 +47,16 @@ plot.volcano.DESeq2 <- function(res, title, padj){
     labs(x="log2FC (fold change)", y="-log10(p-value)", title = title)
   print(p)
 }
+
+################################################################################
+# p-value histogram of results from differential expression analysis
+plot.pval.hist.simp = function(exactTestObj){
+    p = as.data.frame(exactTestObj$table) %>%
+          ggplot(aes(x=PValue)) +
+          geom_histogram(binwidth = 0.05, boundary = 0.5, color = "black") +
+          labs(x = "P-value", title = "Distribution of P-values") 
+    print(p)
+}
 ################################################################################
 # p-value histogram of results from differential expression analysis
 # X = 0.6, Y = 1500 typically
