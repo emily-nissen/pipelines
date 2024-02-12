@@ -1,0 +1,47 @@
+---
+title: "scRNA-seq Pipeline"
+author: "Emily Nissen"
+date: "2024-02-07"
+output: 
+  github_document:
+    html_preview: TRUE
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pre-processing
+
+These steps are specifically for data from 10x genomics.
+
+The output will be a folder with summary metrics and files needed for downstream analysis.
+
+```{bash, eval = F}
+# path to cell ranger (downloaded from 10x genomics)
+## using version 7.1.0
+### cell.ranger <- "/path/tools/cellranger-7.1.0/cellranger "
+
+/path/tools/cellranger-7.1.0/cellranger count --id=sample \
+--transcriptome=/path/References/cellranger/refdata-gex-GRCh38-2020-A \ --fastqs=/path/RawData/usftp21.novogene.com/01.RawData/sample \
+
+```
+
+https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.height = 8, fig.width = 8)
+library(dplyr)
+library(Seurat)
+library(patchwork)
+library(scDblFinder)
+library(ggplot2)
+library(RColorBrewer)
+library(viridis)
+library(PCAtools)
+library(tidyr)
+library(fossil)
+library(ggpubr)
+# library(Azimuth)
+```
