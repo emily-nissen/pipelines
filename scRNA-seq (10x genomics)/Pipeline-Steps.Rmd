@@ -30,7 +30,7 @@ The output will be a folder with summary metrics and files needed for downstream
 
 https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html
 
-```{r setup, include=FALSE}
+```{r, include=FALSE, eval = F}
 knitr::opts_chunk$set(echo = TRUE, fig.height = 8, fig.width = 8)
 library(dplyr)
 library(Seurat)
