@@ -337,7 +337,7 @@ This would be the setup if the data were not paired
 ``` r
 Group = factor(pheno$Group)
 # design matrix
-design = model.matrix(~0+Cell.Type)
+design = model.matrix(~0+Group)
 rownames(design) = colnames(y)
 design
   
