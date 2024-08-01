@@ -5,6 +5,14 @@ Emily Nissen
 
 - [Pre-processing](#pre-processing)
 - [Analysis](#analysis)
+  - [Create Seurat Objects](#create-seurat-objects)
+  - [Quality control](#quality-control)
+    - [Mapping metrics](#mapping-metrics)
+  - [Look at common metrics](#look-at-common-metrics)
+  - [Filtering](#filtering)
+  - [Quality control after filtering](#quality-control-after-filtering)
+  - [Cell-level and gene-level
+    filtering](#cell-level-and-gene-level-filtering)
 
 # Pre-processing
 
@@ -69,3 +77,296 @@ for (sample in samples){
 # Analysis
 
 <https://hbctraining.github.io/scRNA-seq/lessons/04_SC_quality_control.html>
+
+## Create Seurat Objects
+
+``` r
+samples = list.files(data.path)
+## set up function
+read.data <- function(sample){
+  counts = Read10X_h5(paste0(data.path, sample, "/outs/filtered_feature_bc_matrix.h5"))
+
+
+  # create a Seurat object containing the RNA data
+  obj = CreateSeuratObject(
+    counts = counts,
+    assay = "RNA"
+  )
+
+  obj[["percent.mt"]] = PercentageFeatureSet(obj, pattern = "^MT-")
+  obj[["percent.ribosomal"]] = PercentageFeatureSet(obj, pattern = "^RP[LS]")
+
+  return(obj)
+}
+
+seurat.list = list()
+
+for (i in 1:length(samples)){
+  sample <- samples[i]
+  cat(paste("\nreading data:", sample, "\n"))
+
+  seu.obj <- read.data(sample)
+  seurat.list[[sample]] <- seu.obj
+}
+
+save(seurat.list, file = paste0(robjects.path,"/scRNA_SeuratObj_List.RData"))
+
+merged.obj = merge(seurat.list[[1]], y = c(seurat.list[[2]],seurat.list[[3]],seurat.list[[4]],
+                                           seurat.list[[5]],seurat.list[[6]],seurat.list[[7]],
+                                           seurat.list[[8]],seurat.list[[9]],seurat.list[[10]],
+                                           seurat.list[[11]],seurat.list[[12]]),
+                   add.cell.ids = names(seurat.list))
+
+merged.obj$orig.ident = paste0(sapply(strsplit(rownames(merged.obj@meta.data),"_"),"[",2),"_",
+                               sapply(strsplit(rownames(merged.obj@meta.data),"_"),"[",3))
+
+merged.obj[["percent.mt"]] = PercentageFeatureSet(merged.obj, pattern = "^mt-")
+merged.obj[["percent.ribosomal"]] = PercentageFeatureSet(merged.obj, pattern = "^Rp[ls]")
+
+save(merged.obj, file = paste0(robjects.path,"/scRNA_SeuratObj_Merged.RData"))
+
+metadata = merged.obj@meta.data
+save(metadata, file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_Metadata.RData"))
+```
+
+## Quality control
+
+### Mapping metrics
+
+``` r
+load(paste0(robjects.path,"/scRNA_SeuratObj_Merged_Metadata.RData"))
+samples = unique(metadata$orig.ident)
+
+for(i in 1:length(samples)){
+  metrics = read.csv(paste0(data.path,"/Sample_",samples[i],"/outs/metrics_summary.csv"))
+  if(i == 1){
+    metrics.df = metrics
+  }else{
+    metrics.df = rbind(metrics.df, metrics)
+  }
+}
+
+rownames(metrics.df) = samples
+write.csv(metrics.df, file = paste0(tables.path,"/Mapping_Metrics.csv"))
+```
+
+## Look at common metrics
+
+``` r
+load(paste0(robjects.path,"/scRNA_SeuratObj_Merged_Metadata.RData"))
+
+metadata$log10GenesPerUMI = log10(metadata$nFeature_RNA) / log10(metadata$nCount_RNA)
+
+metadata %>% 
+    ggplot(aes(x=orig.ident, fill=orig.ident)) + 
+    geom_bar() +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    theme(plot.title = element_text(hjust=0.5, face="bold")) +
+    ggtitle("NCells")
+
+metadata.long = gather(metadata, type, value, 2:5)
+
+metadata.long %>%
+  ggplot(aes(x = orig.ident, y = value, fill = orig.ident)) + 
+  geom_violin() + 
+  # geom_point() +
+  facet_wrap(vars(type), ncol = 2, scales = "free") 
+
+# log scaled
+metadata %>% 
+    ggplot(aes(color=orig.ident, x=nCount_RNA, fill= orig.ident)) + 
+    geom_density(alpha = 0.2) + 
+    scale_x_log10() +
+    theme_classic() +
+    geom_vline(xintercept = 500) +
+    ylab("Cell density") +
+    xlab("nCount_RNA (nUMI)")
+
+metadata %>% 
+    ggplot(aes(color=orig.ident, x=nFeature_RNA, fill= orig.ident)) + 
+    geom_density(alpha = 0.2) + 
+    theme_classic() +
+    scale_x_log10() +
+    geom_vline(xintercept = c(250,9000)) + 
+    xlab("nFeature_RNA (nGene)")
+
+metadata %>% 
+    ggplot(aes(x=nCount_RNA, y=nFeature_RNA, color=percent.mt)) + 
+    geom_point() + 
+    scale_colour_gradient(low = "gray90", high = "black") +
+    stat_smooth(method=lm) +
+    scale_x_log10() +
+    scale_y_log10() +
+    theme_classic() +
+    # geom_vline(xintercept = 500) +
+    geom_hline(yintercept = 250) +
+    facet_wrap(~orig.ident)
+
+metadata %>% 
+    ggplot(aes(color=orig.ident, x=percent.mt, fill=orig.ident)) + 
+    geom_density(alpha = 0.2) + 
+    # scale_x_log10() +
+    theme_classic() +
+    geom_vline(xintercept = 25)
+
+metadata %>%
+    ggplot(aes(x=log10GenesPerUMI, color = orig.ident, fill=orig.ident)) +
+    geom_density(alpha = 0.2) +
+    theme_classic() +
+    geom_vline(xintercept = 0.8)
+
+metadata %>%
+  ggplot(aes(x=log10GenesPerUMI, y=nFeature_RNA, color = log10(nCount_RNA))) +
+  geom_point() + 
+  facet_wrap(~orig.ident)
+
+metadata %>%
+  group_by(orig.ident) %>%
+  summarise(Ncells = n(), nCount_RNA = mean(nCount_RNA), nFeature_RNA = mean(nFeature_RNA))
+
+metadata %>%
+  group_by(orig.ident) %>%
+  summarise(Ncells = n(), nCount_RNA = median(nCount_RNA), nFeature_RNA = median(nFeature_RNA))
+```
+
+## Filtering
+
+These thresholds for filtering will depend on the experiment.
+
+``` r
+metadata.sub = subset(metadata, (nCount_RNA >= 500) & 
+                                (nFeature_RNA >= 250) &
+                                (nFeature_RNA <=9000) &
+                                (log10GenesPerUMI > 0.8) & 
+                                (percent.mt < 25))
+table(metadata$orig.ident)
+table(metadata.sub$orig.ident)
+
+metadata.sub %>%
+  group_by(orig.ident) %>%
+  summarise(Ncells = n(), nCount_RNA = mean(nCount_RNA), nFeature_RNA = mean(nFeature_RNA))
+
+metadata.sub %>%
+  group_by(orig.ident) %>%
+  summarise(Ncells = n(), nCount_RNA = median(nCount_RNA), nFeature_RNA = median(nFeature_RNA))
+```
+
+## Quality control after filtering
+
+``` r
+metadata = metadata.sub
+
+metadata %>% 
+    ggplot(aes(x=orig.ident, fill=orig.ident)) + 
+    geom_bar() +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+    theme(plot.title = element_text(hjust=0.5, face="bold")) +
+    ggtitle("NCells")
+
+metadata.long = gather(metadata, type, value, 2:5)
+
+metadata.long %>%
+  ggplot(aes(x = orig.ident, y = value, fill = orig.ident)) + 
+  geom_violin() + 
+  # geom_point() +
+  facet_wrap(vars(type), ncol = 2, scales = "free") 
+
+# log scaled
+metadata %>% 
+    ggplot(aes(color=orig.ident, x=nCount_RNA, fill= orig.ident)) + 
+    geom_density(alpha = 0.2) + 
+    scale_x_log10() +
+    theme_classic() +
+    geom_vline(xintercept = 500) +
+    ylab("Cell density") +
+    xlab("nCount_RNA (nUMI)")
+
+metadata %>% 
+    ggplot(aes(color=orig.ident, x=nFeature_RNA, fill= orig.ident)) + 
+    geom_density(alpha = 0.2) + 
+    theme_classic() +
+    scale_x_log10() +
+    geom_vline(xintercept = c(250,9000)) +
+    ggtitle("nGenes per Cell")
+
+metadata %>% 
+    ggplot(aes(x=nCount_RNA, y=nFeature_RNA, color=percent.mt)) + 
+    geom_point() + 
+    scale_colour_gradient(low = "gray90", high = "black") +
+    stat_smooth(method=lm) +
+    scale_x_log10() +
+    scale_y_log10() +
+    theme_classic() +
+    # geom_vline(xintercept = 500) +
+    geom_hline(yintercept = 250) +
+    facet_wrap(~orig.ident)
+
+metadata %>% 
+    ggplot(aes(color=orig.ident, x=percent.mt, fill=orig.ident)) + 
+    geom_density(alpha = 0.2) + 
+    # scale_x_log10() +
+    theme_classic() +
+    geom_vline(xintercept = 10)
+
+metadata %>%
+    ggplot(aes(x=log10GenesPerUMI, color = orig.ident, fill=orig.ident)) +
+    geom_density(alpha = 0.2) +
+    theme_classic() +
+    geom_vline(xintercept = 0.8)
+
+metadata %>%
+  ggplot(aes(x=log10GenesPerUMI, y=nFeature_RNA, color = log10(nCount_RNA))) +
+  geom_point() + 
+  facet_wrap(~orig.ident)
+```
+
+## Cell-level and gene-level filtering
+
+These cell filters will change depending on experiment.
+
+Additional cell filters:
+
+- nGenes \>= 250 & nGenes \<=9000
+
+- log10GenesPerUMI \>= 0.8
+
+- percent.mt \< 25
+
+Gene filters:
+
+- Remove a gene if it is not expressed in at least 10 cells
+
+``` r
+merged.obj$log10GenesPerUMI = log10(merged.obj$nFeature_RNA) / log10(merged.obj$nCount_RNA)
+
+filtered_seurat = subset(x = merged.obj,
+                         subset = 
+                           (nFeature_RNA >= 250) & 
+                           (nFeature_RNA <= 9000) &
+                           (log10GenesPerUMI >= 0.8) & 
+                           (percent.mt < 25))
+filtered_seurat
+
+save(filtered_seurat, file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_CellFiltered.RData"))
+```
+
+``` r
+load(file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_CellFiltered.RData"))
+filtered_seurat[["RNA"]] = JoinLayers(filtered_seurat[["RNA"]])
+filtered_seurat
+
+counts = GetAssayData(object = filtered_seurat, assay = "RNA", layer = "counts")
+keep_genes = Matrix::rowSums(counts) >= 10
+filtered_counts = counts[keep_genes,]
+dim(filtered_counts)
+
+filtered_seurat2 = CreateSeuratObject(filtered_counts, meta.data = filtered_seurat@meta.data)
+filtered_seurat2
+
+filtered_seurat2[["RNA"]] = split(filtered_seurat2[["RNA"]], f = filtered_seurat2$orig.ident)
+filtered_seurat2
+
+save(filtered_seurat2, file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_CellGeneFiltered.RData"))
+```
