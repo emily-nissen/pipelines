@@ -35,9 +35,15 @@ files for each sample)
 
 <https://www.bioinformatics.babraham.ac.uk/projects/fastqc/>
 
-``` bash
-fastqc -o path_to_fastqc_output_folder/fastqc/ -f fastq -t 8 path_to_data_folder/sample1_R1.fastq.gz
-fastqc -o path_to_fastqc_output_folder/fastqc/ -f fastq -t 8 path_to_data_folder/sample1_R2.fastq.gz
+``` r
+fastq.path = "/path/to/fastq/"
+fastqc.path = "/path/to/fastqc/"
+samples = c("sample1","sample2")
+
+for(i in 1:length(samples)){
+  system(paste0("fastqc -o ",fastqc.path, " -f fastq -t 8 ", fastq.path, samples[i],"_R1.fastq.gz"))
+  system(paste0("fastqc -o ",fastqc.path, " -f fastq -t 8 ", fastq.path, samples[i],"_R2.fastq.gz"))
+}
 ```
 
 ## MultiQC
@@ -47,8 +53,8 @@ aggregate all files. Input is the folder where all FastQC reports are.
 
 <https://multiqc.info/>
 
-``` bash
-multiqc --interactive path-to-fastqc-output-folder/
+``` r
+system(paste0("multiqc --interactive ", fastqc.path))
 ```
 
 ## Trimming
@@ -63,15 +69,19 @@ Or Trim Galore!:
 
 Trimming for Illumina universal adapters
 
-``` bash
-java -jar Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 8 \
-path_to_data_folder/sample1_R1.fastq.gz \
-path_to_data_folder/sample1_R2.fastq.gz \
-path_to_data_folder/sample1_R1_paired.fastq.gz \
-path_to_data_folder/sample1_R1_unpaired.fastq.gz \
-path_to_data_folder/sample1_R2_paired.fastq.gz \
-path_to_data_folder/sample1_R2_unpaired.fastq.gz \
-ILLUMINACLIP://Trimmomatic-0.39/adapters/TruSeq3-PE-2:2:30:10 Leading:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:31
+``` r
+for(i in 1:length(samples)){
+  trim = paste0("java -jar Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 8 ",
+              fastq.path, samples[i], "_R1.fastq.gz ",
+              fastq.path, samples[i], "_R2.fastq.gz ",
+              fastq.path, samples[i], "_R1_paired.fastq.gz ",
+              fastq.path, samples[i], "_R1_unpaired.fastq.gz ",
+              fastq.path, samples[i], "_R2_paired.fastq.gz ",
+              fastq.path, samples[i], "_R2_unpaired.fastq.gz ",
+              "ILLUMINACLIP://Trimmomatic-0.39/adapters/TruSeq3-PE-2:2:30:10 Leading:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:31")
+  print(trim)
+  system(trim)
+}
 ```
 
 ``` bash
@@ -101,36 +111,28 @@ differential expression analysis.
 rsem-calculate-expression \[options\] –paired-end upstream_read_file(s)
 downstream_read_file(s) reference_name sample_name
 
-``` bash
-mkdir path_to_rsem_results/rsemResults/rsemResult_sample1
+``` r
+rsem.path = "/path/to/rsemResults/"
+reference.path = "/path/to/reference/"
 
-rsem-calculate-expression \
-# number of threads
--p 8 \
-# aligner
---bowtie2 \
---paired-end \
-# generate BAM files
---output-genome-bam \
-# strandedness will depend on how the libraries were prepared, default is is none
---strandedness reverse \
-# upstream read file
-path_to_data_folder/sample1_R1.fastq.gz \
-# downstream read file
-path_to_data_folder/sample1_R2.fastq.gz \
-# reference_name
-path_to_reference/ucsc-hg38-rsem/hg38-rsem \
-#sample_name, all output files are prefixed by this name
-path_to_rsem_results/rsemResults/rsemResult_sample1/sample1
+for(i in 1:length(samples)){
+  system(paste0("mkdir ", rsem.path, "rsemResult_", samples[i]))
+  
+  rsem = paste0("rsem-calculate-expression -p 8 --bowtie2 --paired-end --output-genome-bam --strandedness reverse ",
+                fastq.path, samples[i], "_R1.fastq.gz ", samples[i], "_R2.fastq.gz ", reference.path, 
+                "ucsc-hg38-rsem/hg38-rsem ", rsem.path, "rsemResults_", samples[i], "/", samples[i])
+  print(rsem)
+  system(rsem)
+}
 ```
 
-``` bash
-rsem-generate-data matrix \
-# list all gene.results files
-path_to_rsem_results/rsemResults/rsemResults_sample1/sample1.genes.results \
-path_to_rsem_results/rsemResults/rsemResults_sample2/sample2.genes.results \
-path_to_rsem_results/rsemResults/rsemResults_sampleN/sampleN.genes.results > genes.count.matrix
-```
+<!-- ```{bash, eval = F} -->
+<!-- rsem-generate-data matrix \ -->
+<!-- # list all gene.results files -->
+<!-- path_to_rsem_results/rsemResults/rsemResults_sample1/sample1.genes.results \ -->
+<!-- path_to_rsem_results/rsemResults/rsemResults_sample2/sample2.genes.results \ -->
+<!-- path_to_rsem_results/rsemResults/rsemResults_sampleN/sampleN.genes.results > genes.count.matrix -->
+<!-- ``` -->
 
 ## Get Relevant Tables
 
@@ -199,8 +201,8 @@ if(column == 5){
 
 Run multiqc again to add on mapping statistics
 
-``` bash
-multiqc --interactive path_to_folder_that_has_fastqcfolder_and_rsemfolder/
+``` r
+system(paste0("multiqc --interactive path_to_folder_that_has_fastqcfolder_and_rsemfolder/"))
 ```
 
 # Differential Expression Analysis
