@@ -1,24 +1,23 @@
----
-title: "scRNA-seq Pipeline"
-author: "Emily Nissen"
-date: "2024-02-07"
-output: 
-  github_document:
-    html_preview: TRUE
-    toc: true
-editor_options: 
-  chunk_output_type: console
----
+scRNA-seq Pipeline
+================
+Emily Nissen
+2024-02-07
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+- [Pre-processing](#pre-processing)
+  - [Convert BCL to FastQ files](#convert-bcl-to-fastq-files)
+  - [Concatenate files, trim adaptors, and
+    FastQC](#concatenate-files-trim-adaptors-and-fastqc)
+  - [Diversity Trim and Filtering](#diversity-trim-and-filtering)
+  - [Align using Bismark](#align-using-bismark)
+  - [Dedup](#dedup)
+  - [Extract Methylation](#extract-methylation)
+- [Analysis](#analysis)
 
 # Pre-processing
 
-These are the folders you will need in the project folder 
+These are the folders you will need in the project folder
 
-```{bash, eval = F}
+``` bash
 cd /path/to/folder
 
 mkdir trimmedData
@@ -28,14 +27,17 @@ mkdir bismarkAlignments
 mkdir extractMethylation
 ```
 
+See the “PreProcess” folder for scripts that can be downloaded based on
+the code in the following steps.
 
-See the "PreProcess" folder for scripts that can be downloaded based on the code in the following steps.
-
-If the sequencing was done at the KUMC genomics core - they most likely used the NuGEN Ovation RRBS Methyl-Seq technology. These steps follow the recommendations found here: <https://github.com/nugentechnologies/NuMetRRBS>
+If the sequencing was done at the KUMC genomics core - they most likely
+used the NuGEN Ovation RRBS Methyl-Seq technology. These steps follow
+the recommendations found here:
+<https://github.com/nugentechnologies/NuMetRRBS>
 
 ## Convert BCL to FastQ files
 
-```{r convert, eval = F}
+``` r
 runfolder <- "/path/to/run/folder/"
 
 convert <- paste0("bcl2fastq --runfolder-dir ", runfolder, 
@@ -49,7 +51,7 @@ system(convert)
 
 ## Concatenate files, trim adaptors, and FastQC
 
-```{r cat-trim-fastqc, eval = F}
+``` r
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
@@ -96,7 +98,7 @@ for(file in files){
 
 ## Diversity Trim and Filtering
 
-```{r div-trim, eval = F}
+``` r
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
@@ -127,7 +129,7 @@ for(sample in samples){
 
 ## Align using Bismark
 
-```{r align, eval = F}
+``` r
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
@@ -157,7 +159,7 @@ for(sample in samples){
 
 <https://github.com/tecangenomics/nudup>
 
-```{r dedup, eval = F}
+``` r
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
@@ -197,7 +199,7 @@ for(sample in samples){
 
 ## Extract Methylation
 
-```{r extract, eval = F}
+``` r
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
