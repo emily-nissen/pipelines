@@ -7,9 +7,10 @@
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
-dir <- "/path/to/run/folder/Unaligned/Project_/"
-out <- "/path/to/out/folder/trimmedData/"
-out2 <- "/path/to/out/folder/fastqc/"
+folder <- "/path/to/folder/"
+dir <- paste0(folder,"runfolder/Unaligned/Project_/")
+out <- paste0(folder,"trimmedData/")
+out2 <- paste0(folder,"fastqc/")
 
 samples <- c()
 files <- paste0("Sample_",samples)

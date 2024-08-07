@@ -16,6 +16,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Pre-processing
 
+These are the folders you will need in the project folder 
+
+```{bash, eval = F}
+cd /path/to/folder
+
+mkdir trimmedData
+mkdir trimmedData/complete
+mkdir fastqc
+mkdir bismarkAlignments
+mkdir extractMethylation
+```
+
+
 See the "PreProcess" folder for scripts that can be downloaded based on the code in the following steps.
 
 If the sequencing was done at the KUMC genomics core - they most likely used the NuGEN Ovation RRBS Methyl-Seq technology. These steps follow the recommendations found here: <https://github.com/nugentechnologies/NuMetRRBS>
@@ -40,9 +53,10 @@ system(convert)
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
-dir <- "/path/to/run/folder/Unaligned/Project_/"
-out <- "/path/to/out/folder/trimmedData/"
-out2 <- "/path/to/out/folder/fastqc/"
+folder <- "/path/to/folder/"
+dir <- paste0(folder,"runfolder/Unaligned/Project_/")
+out <- paste0(folder,"trimmedData/")
+out2 <- paste0(folder,"fastqc/")
 
 samples <- c()
 files <- paste0("Sample_",samples)
@@ -82,12 +96,12 @@ for(file in files){
 
 ## Diversity Trim and Filtering
 
-```{r}
+```{r div-trim, eval = F}
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
-dir <- "/path/to/working/dir/"
-out.dir <- paste0(dir, "trimmedData/")
+folder <- "/path/to/folder/"
+out.dir <- paste0(folder, "trimmedData/")
 
 samples <- c()
 
@@ -113,11 +127,11 @@ for(sample in samples){
 
 ## Align using Bismark
 
-```{r}
+```{r align, eval = F}
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
-dir <- "/path/to/working/dir/"
+dir <- "/path/to/folder/"
 data.dir <- paste0(dir, "trimmedData/complete/")
 out.dir <- paste0(dir, "bismarkAlignments/")
 
@@ -139,3 +153,78 @@ for(sample in samples){
 }
 ```
 
+## Dedup
+
+<https://github.com/tecangenomics/nudup>
+
+```{r dedup, eval = F}
+args <- commandArgs(trailingOnly=TRUE)
+group <- as.numeric(args[1])
+
+folder <- "path/to/folder/"
+dir <- paste0(folder,"bismarkAlignments/")
+ix.dir <- paste0(folder,"runfolder/Project_/")
+tmp.dir <- folder
+
+samples <- c()
+
+if(group == 1){
+  samples = samples[]
+}else if(group == 2){
+  samples = samples[]
+}
+
+for(sample in samples){
+  #  First, need to convert bam to sam
+  convert <- paste0("samtools view -h -o ", dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam ", 
+                    dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.bam")
+  print(convert)
+  system(convert)
+  
+  # Second, need to strip sam file to correct names
+  strip <- paste0("strip_bismark_sam.sh ", dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam")
+  print(strip)
+  system(strip)
+  
+  ## Third, run dedup script
+  dedup <- paste0("python nudup.py -2 -f ", ix.dir, "Project_", sample, "/", sample, "_R2.fastq -o ",
+                  sample, "_trimmed_bismark_stripped -T ", tmp.dir, "tmp", sample, " ", 
+                  dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam_stripped.sam")
+  print(dedup)
+  system(dedup)
+}
+```
+
+## Extract Methylation
+
+```{r extract, eval = F}
+args <- commandArgs(trailingOnly=TRUE)
+group <- as.numeric(args[1])
+
+folder <- "/path/to/folder/"
+dir <- paste0(folder,"bismarkAlignments/")
+out.dir <- paste0(folder,"extractMethylation/")
+
+samples <- c()
+
+if(group == 1){
+  samples = samples[]
+}else if(group == 2){
+  samples = samples[]
+}
+
+for(sample in samples){
+  sort <- paste0("samtools sort -n -o ", dir, sample, "_trimmed_bismark_stripped_dedup.bam ", 
+                 dir, sample, "_trimmed_bismark_stripped.sorted.dedup.bam")
+  print(sort)
+  system(sort)
+  
+  extract <- paste0("/kuhpc/work/biostat/e617n596/tools/Bismark-0.22.3/bismark_methylation_extractor --paired-end -o ",
+                    out.dir, sample, " --bedGraph --multicore 8 ", dir, sample, "_trimmed_bismark_stripped.dedup.bam")
+  print(extract)
+  system(extract)
+}
+```
+
+
+# Analysis

@@ -7,7 +7,7 @@
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
-dir <- "/path/to/working/dir/"
+dir <- "/path/to/folder/"
 data.dir <- paste0(dir, "trimmedData/complete/")
 out.dir <- paste0(dir, "bismarkAlignments/")
 

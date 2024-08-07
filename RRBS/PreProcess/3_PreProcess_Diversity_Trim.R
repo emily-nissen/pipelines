@@ -7,8 +7,9 @@
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
 
-dir = "/path/to/working/dir/"
-out.dir = paste0(dir, "trimmedData/")
+folder <- "/path/to/folder/"
+out.dir <- paste0(folder, "trimmedData/")
+
 samples = c()
 
 if(group == 1){
