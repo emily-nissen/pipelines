@@ -13,6 +13,12 @@ Emily Nissen
   - [Quality control after filtering](#quality-control-after-filtering)
   - [Cell-level and gene-level
     filtering](#cell-level-and-gene-level-filtering)
+  - [Doublets](#doublets)
+  - [Integration](#integration)
+    - [LogNormalize](#lognormalize)
+    - [SCTransform](#sctransform)
+    - [Plotting](#plotting)
+  - [Identifying Marker Genes](#identifying-marker-genes)
 
 # Pre-processing
 
@@ -369,4 +375,153 @@ filtered_seurat2[["RNA"]] = split(filtered_seurat2[["RNA"]], f = filtered_seurat
 filtered_seurat2
 
 save(filtered_seurat2, file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_CellGeneFiltered.RData"))
+```
+
+## Doublets
+
+If you want to remove doublets. I usually skip this step and opt for
+looking for doublet clusters after clustering and gene expression
+analysis.
+
+Doublets should be estimated for each sample separately.
+
+``` r
+filtered_seurat_list = SplitObject(filtered_seurat2, split.by = "orig.ident")
+
+sce_list = lapply(filtered_seurat_list, function(x){
+  y = as.SingleCellExperiment(x)
+  return(y)
+})
+
+sce_dbl_list = lapply(sce_list, function(x){
+  print(x)
+  y = scDblFinder(x)
+  return(y)
+  }
+)
+
+save(sce_dbl_list, file = paste0(robjects.path,"/SCE_Doublets_List.RData"))
+
+filtered_dbl_seurat_list = lapply(sce_dbl_list, function(x){
+  y = as.Seurat(x, data = NULL)
+  print(y)
+  return(y)
+})
+
+save(filtered_dbl_seurat_list, file = paste0(robjects.path,"/scRNA_SeuratObj_List_CellGeneFiltered_DblRmv.RData"))
+```
+
+## Integration
+
+### LogNormalize
+
+``` r
+load(file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_CellGeneFiltered.RData"))
+
+seu.list = SplitObject(filtered_seurat2, split.by = "orig.ident")
+# run standard anlaysis workflow
+seu.list = lapply(X = seu.list, FUN = function(x){
+  x <- NormalizeData(x)
+  x <- FindVariableFeatures(x, nfeatures = 5000)
+})
+#############################################################################################################
+#############################################################################################################
+features <- SelectIntegrationFeatures(object.list = seu.list, nfeatures = 5000)
+#############################################################################################################
+#############################################################################################################
+seu.list <- lapply(X = seu.list, FUN = function(x){
+  x <- ScaleData(x, features = features)
+  x <- RunPCA(x, features = features)
+})
+#############################################################################################################
+#############################################################################################################
+anchors <- FindIntegrationAnchors(object.list = seu.list, anchor.features = features, reduction = "rpca")
+#############################################################################################################
+#############################################################################################################
+int.obj <- IntegrateData(anchorset = anchors, normalization.method = "LogNormalize")
+save(int.obj, file = paste0(robjects.path,"/scRNA_SeuratObj_LogNorm_IntegratedRPCA.RData"))
+#############################################################################################################
+#############################################################################################################
+DefaultAssay(int.obj) <- "integrated"
+
+# Run the standard workflow for visualization and clustering
+int.obj <- ScaleData(int.obj, verbose = FALSE)
+int.obj <- RunPCA(int.obj, reduction.name = "integrated.rpca")
+int.obj <- RunUMAP(int.obj, reduction = "integrated.rpca", dims = 1:30, reduction.name = "umap.rpca")
+int.obj <- FindNeighbors(int.obj, reduction = "integrated.rpca", dims = 1:30)
+int.obj <- FindClusters(int.obj, resolution = 1, cluster.name = "rpca_clusters_res1.0")
+int.obj
+save(int.obj, file = paste0(robjects.path,"/scRNA_SeuratObj_LogNorm_IntegratedRPCA_Clustered_UMAP.RData"))
+```
+
+### SCTransform
+
+``` r
+load(file = paste0(robjects.path,"/scRNA_SeuratObj_Merged_CellGeneFiltered.RData"))
+
+seu.list <- SplitObject(filtered_seurat2, split.by = "orig.ident")
+
+seu.list <- lapply(X = seu.list, FUN = function(x){
+  x <- SCTransform(x)
+})
+#############################################################################################################
+#############################################################################################################
+features <- SelectIntegrationFeatures(object.list = seu.list, nfeatures = 5000)
+#############################################################################################################
+#############################################################################################################
+seu.list <- PrepSCTIntegration(object.list = seu.list, anchor.features = features)
+#############################################################################################################
+#############################################################################################################
+anchors <- FindIntegrationAnchors(object.list = seu.list, anchor.features = features, reduction = "rpca",
+                                 normalization.method = "SCT")
+#############################################################################################################
+#############################################################################################################
+int.obj <- IntegrateData(anchorset = anchors, normalization.method = "SCT")
+save(int.obj, file = paste0(robjects.path,"/scRNA_SeuratObj_SCT_IntegratedRPCA.RData"))
+#############################################################################################################
+#############################################################################################################
+DefaultAssay(int.obj) <- "integrated"
+int.obj <- RunPCA(int.obj, reduction.name = "integrated.rpca")
+int.obj <- RunUMAP(int.obj, reduction = "integrated.rpca", dims = 1:30, reduction.name = "umap.rpca")
+int.obj <- FindNeighbors(int.obj, reduction = "integrated.rpca", dims = 1:30)
+int.obj <- FindClusters(int.obj, resolution = 1, cluster.name = "rpca_clusters_res1.0")
+int.obj
+save(int.obj, file = paste0(robjects.path,"/scRNA_SeuratObj_SCT_IntegratedRPCA_Clustered_UMAP.RData"))
+```
+
+### Plotting
+
+``` r
+plots.path = "/path/to/plots"
+
+pdf(file = paste0(plots.path,"/RPCA_Integrated_OrigIdent.pdf"), width = 12, height = 12)
+DimPlot(int.obj, reduction = "integrated.rpca", group.by = "orig.ident")
+dev.off()
+
+pdf(file = paste0(plots.path,"/UMAP_Integrated_OrigIdent.pdf"), width = 12, height = 12)
+DimPlot(int.obj, reduction = "umap.rpca", group.by = "orig.ident")
+dev.off()
+
+pdf(file = paste0(plots.path,"/UMAP_Integrated_Cluster.pdf"), width = 12, height = 12)
+DimPlot(int.obj, reduction = "umap.rpca", group.by = "rpca_clusters_res1.0", label = T)
+dev.off()
+
+pdf(file = paste0(plots.path,"/UMAP_Integrated_OrigIdent_Cluster.pdf"), width = 16, height = 16)
+DimPlot(int.obj, reduction = "umap.rpca", group.by = "rpca_clusters_res1.0", split.by = "orig.ident", label = T, ncol = 4)
+dev.off()
+```
+
+## Identifying Marker Genes
+
+Seurat recommend switching to RNA assay for amrker selection.
+
+``` r
+Idents(int.obj) <- "rpca_clusters_res.10"
+DefaultAssay(int.obj) <- "RNA"
+# int.obj[["RNA"]] <- JoinLayers(int.obj[["RNA"]])
+int.obj <- NormalizeData(int.obj, assay = "RNA")
+int.obj <- FindVariableFeatures(int.obj, assay = "RNA")
+int.obj <- ScaleData(int.obj, assay = "RNA")
+
+markers <- FindConservedMarkers(int.obj, grouping.var = "orig.ident")
 ```
