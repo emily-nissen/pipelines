@@ -1,7 +1,7 @@
 ---
-title: "scRNA-seq Pipeline"
+title: "RRBS Pipeline"
 author: "Emily Nissen"
-date: "2024-02-07"
+date: "2024-08-07"
 output: 
   github_document:
     html_preview: TRUE
