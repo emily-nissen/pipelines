@@ -15,6 +15,7 @@ pwd; hostname; date
 pwd; hostname; date
 
 ml load R/4.2
+export R_LIBS_USER=/kuhpc/work/biostat/e617n596/tools/R/4.2 
 ml load fastqc
 ml load cutadapt
 ml load java

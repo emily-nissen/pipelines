@@ -14,7 +14,8 @@ pwd; hostname; date
 
 ml load bowtie2
 ml load samtools
-ml load R
+ml load R/4.2
+export R_LIBS_USER=/kuhpc/work/biostat/e617n596/tools/R/4.2 
 ml load python/2.7
 
 Rscript 5_PreProcess_DeDup.R $SLURM_ARRAY_TASK_ID
