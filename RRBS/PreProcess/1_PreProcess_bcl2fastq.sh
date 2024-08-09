@@ -15,6 +15,7 @@ pwd; hostname; date
 
 ml load bcl2fastq2
 ml R/4.2
+export R_LIBS_USER=/kuhpc/work/biostat/e617n596/tools/R/4.2 
 
 Rscript 1_PreProcess_bcl2fastq.R
  
