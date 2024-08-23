@@ -3,6 +3,7 @@ RRBS Pipeline
 Emily Nissen
 2024-08-07
 
+- [Project Notes](#project-notes)
 - [Pre-processing](#pre-processing)
   - [1_PreProcess_bcl2fastq](#1_preprocess_bcl2fastq)
   - [2_PreProcess_Cat_Trim_Fastqc.R](#2_preprocess_cat_trim_fastqcr)
@@ -16,6 +17,10 @@ Emily Nissen
   - [2_Test_Differential_Methylation](#2_test_differential_methylation)
   - [3_Get_Top_Variable_CpGs](#3_get_top_variable_cpgs)
   - [4_Annotate_CpGs](#4_annotate_cpgs)
+
+# Project Notes
+
+Add any project notes here
 
 # Pre-processing
 
@@ -42,9 +47,15 @@ the steps found here: <https://github.com/nugentechnologies/NuMetRRBS>
 ## 1_PreProcess_bcl2fastq
 
 When they use the NuGEN Ovation technology, the genomics core is not
-able to convert the BCL to FastQ files, and we will have to do it. They
-usually add in the additional 6 bases of random UMI for duplicate
-marking feature to determine PCR duplicates.
+able to convert the BCL to FastQ files to take into account the
+additional 6 bases of random UM for duplicate marking. And we will have
+to do it.
+
+We use the –use-bases-mask Y*,I8Y*,Y\* to indicate the first read should
+be generated as a fastq file, the first 8 bases of the second read are
+the index, and the additional bases after that (6 unknown bps) should be
+generated as a fastq file, and the third read should be generated as a
+fastq file.
 
 ## 2_PreProcess_Cat_Trim_Fastqc.R
 
