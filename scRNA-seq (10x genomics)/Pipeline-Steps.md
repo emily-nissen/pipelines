@@ -3,7 +3,10 @@ scRNA-seq Pipeline
 Emily Nissen
 2024-02-07
 
+- [Project Notes](#project-notes)
 - [Pre-processing](#pre-processing)
+  - [0_Cell_Ranger_Mkfastq](#0_cell_ranger_mkfastq)
+  - [0_Cell_Ranger](#0_cell_ranger)
 - [Analysis](#analysis)
   - [Create Seurat Objects](#create-seurat-objects)
   - [Quality control](#quality-control)
@@ -20,65 +23,35 @@ Emily Nissen
     - [Plotting](#plotting)
   - [Identifying Marker Genes](#identifying-marker-genes)
 
+# Project Notes
+
+Add any project notes here
+
 # Pre-processing
+
+See the “PreProcess/” folder for scripts that can be downloaded based on
+the code in the following steps.
 
 These steps are specifically for data from 10x genomics.
 
-Demultiplex - if needed
+## 0_Cell_Ranger_Mkfastq
+
+Demultiplex - if needed. Most likely you do not need to demultiplex
+yourself. With the new NovaSeq X Plus Sequencer, the genomics core is
+able to perform the bcl2fastq on instrument for 10x single-cell data.
 
 ``` bash
-#!/bin/bash
-#SBATCH --job-name=mkfastq      # Job name
-#SBATCH --partition=biostat           # Partition Name (Required)
-#SBATCH --mail-type=ALL       # Mail events (NONE, BEGIN, END, FAIL, ALL)
-#SBATCH --mail-user=e617n596@kumc.edu     # Where to send mail  
-#SBATCH --ntasks=16                   
-#SBATCH --nodes=1
-#SBATCH --mem=120gb                    # Job memory request
-#SBATCH --time=5-00:00:00             # Time limit days-hrs:min:sec
-#SBATCH --output=mkfastq_%j.log          # Standard output and error log 
-
-pwd; hostname; date
- 
-ml bcl2fastq2
-
-/path/tools/cellranger-7.1.0/cellranger mkfastq --id=fastq --run=/path/to/run/folder --samplesheet=/path/to/run/folder/SampleSheet-1.csv
-
-date
+/path/to/cellranger mkfastq --id=fastq \
+--run=/path/to/run/folder \
+--samplesheet=/path/to/run/folder/SampleSheet-1.csv
 ```
 
-Run a for loop to get count data.
+## 0_Cell_Ranger
 
-The output will be a folder with summary metrics and files needed for
-downstream analysis.
-
-``` r
-args <- commandArgs(trailingOnly=TRUE)
-group <- as.numeric(args[1])
-
-samples <- c("sample1","sample2","sample3")
-
-if(group == 1){
-  samples = samples[1]
-}else if(group == 2){
-  samples = samples[2]
-}else if(group == 3){
-  samples = samples[3]
-}
-
-cell.ranger <- "/path/tools/cellranger-7.1.0/cellranger "
-
-for (sample in samples){
-  cellranger.count <- paste0(cell.ranger, "count ",
-                            "--id=", sample, " ",
-                            "--transcriptome=/path/to/references/cellranger/refdata-gex-mm10-2020-A ",
-                            "--fastqs=/path/to/fastq/outs/fastq_path/Project_SahaSC3_051524/", sample,
-                            # " --sample=", sample.id, # not really needed if sample is already named intuitively
-                            " --localcores=16")
-  print(cellranger.count)
-  system(cellranger.count)
-}
-```
+Run cell ranger count. All you need to supply is how many jobs you want
+to create (by setting the number of arrays) and the sample sheet file
+from the run. The “Sample_ID” column in this sample sheet file should
+match the names of the folders that contain the fastq files
 
 # Analysis
 
