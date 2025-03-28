@@ -1,6 +1,6 @@
 ---
 title: "Bulk RNA-seq Pipeline"
-author: "Emily Nissen"
+author: "Emily (Nissen) Schueddig"
 date: "2024-02-07"
 output: 
   github_document:
@@ -9,6 +9,8 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+
+**Last Modified:** `r Sys.Date()`
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -23,10 +25,10 @@ Add any project notes here
 These are the folders you will need to set up in the project folder on the cluster:
 
 ```{bash, eval = F}
-cd /path/to/folder
+PFOLDER=/path/to/project/folder
 
-mkdir fastqc
-mkdir rsemResults
+mkdir $PFOLDER/fastqc
+mkdir $PFOLDER/rsemResults
 ```
 
 See the "PreProcess" folder for scripts that can be downloaded based on the code in the following steps.

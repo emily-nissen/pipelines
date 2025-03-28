@@ -1,13 +1,14 @@
 Bulk RNA-seq Pipeline
 ================
-Emily Nissen
+Emily (Nissen) Schueddig
 2024-02-07
 
+- [Project Notes](#project-notes)
 - [Pre-processing](#pre-processing)
-  - [FastQC](#fastqc)
-  - [MultiQC](#multiqc)
-  - [Trimming](#trimming)
-  - [Aligning](#aligning)
+  - [1_PreProcess_fastqc](#1_preprocess_fastqc)
+    - [MultiQC](#multiqc)
+  - [1.2_PreProcess_Trimming](#12_preprocess_trimming)
+  - [2_PreProcess_Aligning](#2_preprocess_aligning)
   - [Get Relevant Tables](#get-relevant-tables)
   - [MultiQC](#multiqc-1)
 - [Differential Expression Analysis](#differential-expression-analysis)
@@ -24,9 +25,30 @@ Emily Nissen
   - [Reactome Pathways](#reactome-pathways)
   - [IPA](#ipa)
 
+**Last Modified:** 2025-03-28
+
+# Project Notes
+
+Add any project notes here
+
 # Pre-processing
 
-## FastQC
+These are the folders you will need to set up in the project folder on
+the cluster:
+
+``` bash
+PFOLDER=/path/to/project/folder
+
+mkdir $PFOLDER/fastqc
+mkdir $PFOLDER/rsemResults
+```
+
+See the “PreProcess” folder for scripts that can be downloaded based on
+the code in the following steps.
+
+## 1_PreProcess_fastqc
+
+First, concatenate files if needed.
 
 Run FastQC to check quality of data.
 
@@ -35,29 +57,18 @@ files for each sample)
 
 <https://www.bioinformatics.babraham.ac.uk/projects/fastqc/>
 
-``` r
-fastq.path = "/path/to/fastq/"
-fastqc.path = "/path/to/fastqc/"
-samples = c("sample1","sample2")
-
-for(i in 1:length(samples)){
-  system(paste0("fastqc -o ",fastqc.path, " -f fastq -t 8 ", fastq.path, samples[i],"_R1.fastq.gz"))
-  system(paste0("fastqc -o ",fastqc.path, " -f fastq -t 8 ", fastq.path, samples[i],"_R2.fastq.gz"))
-}
-```
-
-## MultiQC
+### MultiQC
 
 FastQC outputs individual document for each fastq file. MultiQC will
 aggregate all files. Input is the folder where all FastQC reports are.
 
 <https://multiqc.info/>
 
-``` r
-system(paste0("multiqc --interactive ", fastqc.path))
+``` bash
+multiqc --interactive ./
 ```
 
-## Trimming
+## 1.2_PreProcess_Trimming
 
 Only trim if needed. Usually adaptor content shows up in FastQC reports.
 
@@ -69,21 +80,6 @@ Or Trim Galore!:
 
 Trimming for Illumina universal adapters
 
-``` r
-for(i in 1:length(samples)){
-  trim = paste0("java -jar Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 8 ",
-              fastq.path, samples[i], "_R1.fastq.gz ",
-              fastq.path, samples[i], "_R2.fastq.gz ",
-              fastq.path, samples[i], "_R1_paired.fastq.gz ",
-              fastq.path, samples[i], "_R1_unpaired.fastq.gz ",
-              fastq.path, samples[i], "_R2_paired.fastq.gz ",
-              fastq.path, samples[i], "_R2_unpaired.fastq.gz ",
-              "ILLUMINACLIP://Trimmomatic-0.39/adapters/TruSeq3-PE-2:2:30:10 Leading:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:31")
-  print(trim)
-  system(trim)
-}
-```
-
 ``` bash
 TrimGalore-0.6.6/trim_galore --paired \
 -a AGATCGGAAGAGC -a2 AAATCAAAAAAAC \
@@ -91,7 +87,7 @@ path_to_data_folder/sample1_R1.fastq.gz \
 path_to_data_folder/sample1_R2.fastq.gz \
 ```
 
-## Aligning
+## 2_PreProcess_Aligning
 
 RSEM aligns to the transcriptome. Use rsem-prepare-reference to setup
 and index transcriptome for the organism and aligner you plan on using
@@ -110,21 +106,6 @@ differential expression analysis.
 
 rsem-calculate-expression \[options\] –paired-end upstream_read_file(s)
 downstream_read_file(s) reference_name sample_name
-
-``` r
-rsem.path = "/path/to/rsemResults/"
-reference.path = "/path/to/reference/"
-
-for(i in 1:length(samples)){
-  system(paste0("mkdir ", rsem.path, "rsemResult_", samples[i]))
-  
-  rsem = paste0("rsem-calculate-expression -p 8 --bowtie2 --paired-end --output-genome-bam --strandedness reverse ",
-                fastq.path, samples[i], "_R1.fastq.gz ", samples[i], "_R2.fastq.gz ", reference.path, 
-                "ucsc-hg38-rsem/hg38-rsem ", rsem.path, "rsemResults_", samples[i], "/", samples[i])
-  print(rsem)
-  system(rsem)
-}
-```
 
 <!-- ```{bash, eval = F} -->
 <!-- rsem-generate-data matrix \ -->
@@ -201,8 +182,8 @@ if(column == 5){
 
 Run multiqc again to add on mapping statistics
 
-``` r
-system(paste0("multiqc --interactive path_to_folder_that_has_fastqcfolder_and_rsemfolder/"))
+``` bash
+multiqc --interactive ./
 ```
 
 # Differential Expression Analysis
