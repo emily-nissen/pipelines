@@ -2,34 +2,28 @@
 # Title: Get Counts
 # Author: Emily Schueddig
 # Date: 02/14/2025
-# Last modified: 
+# Last modified: 3/28/2025
 ################################################
 library(rio)
 
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
+n <- as.numeric(args[3])
 print(group)
 csv <- rio::import(args[2], skip=15)
 
 samples = csv$Sample_ID
 
-if(group == 1){
-  samples = samples[1:3]
-}else if(group == 2){
-  samples = samples[4:6]
-}else if(group == 3){
-  samples = samples[7:9]
-}
+l = split(samples, cut(seq_along(samples), n, labels=F))
+samples.run = l[[group]]
 
-print(samples)
+print(samples.run)
 
-cell.ranger <- "/path/to/cellranger "
-
-for (sample in samples){
-  cellranger.count <- paste0(cell.ranger, "count ",
+for (sample in samples.run){
+  cellranger.count <- paste0("$CRANGER count ", # $CRANGER is path to cellranger
                             "--id=", sample, " ",
-                            "--transcriptome=/path/to/reference/refdata-gex-mm10-2020-A ",
-                            "--fastqs=/path/to/run/folder/", sample,
+                            "--transcriptome=$REFERENCES/cellranger/refdata-gex-mm10-2020-A ",
+                            "--fastqs=",args[4], sample,
                             # " --sample=", sample.id,
                             " --localcores=16")
   print(cellranger.count)
