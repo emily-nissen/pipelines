@@ -1,28 +1,28 @@
 ##########################################
 # Title: Align
-# Author: Emily Nissen
+# Author: Emily (Nissen) Schueddig
 # Date: 8/7/2024
+# Modified: 3/31/2025
 ##########################################
 
 args <- commandArgs(trailingOnly=TRUE)
 group <- as.numeric(args[1])
+n <- as.numeric(args[2])
 
-dir <- "/path/to/folder/"
-data.dir <- paste0(dir, "trimmedData/complete/")
-out.dir <- paste0(dir, "bismarkAlignments/")
+pfolder <- args[3]
+data.dir <- paste0(pfolder, "/trimmedData/complete/")
+out.dir <- paste0(pfolder,"/bismarkAlignments/")
 
-samples <- c()
+samples = c()
+l = split(samples, cut(seq_along(samples), n, labels=F))
+samples.run = l[[group]]
 
-if(group == 1){
-  samples = samples[]
-}else if(group == 2){
-  samples = samples[]
-}
+print(samples.run)
 
-for(sample in samples){
-  bismark <- paste0("/kuhpc/work/biostat/e617n596/tools/Bismark-0.22.3/bismark --bowtie2 --path_to_bowtie2 /kuhpc/software/7/install/bowtie2/2.3.5.1/ --output_dir ", 
-                    out.dir, " --multicore 8 --samtools_path /kuhpc/software/7/install/samtools/1.9/bin /kuhpc/work/biostat/e617n596/References/bismark/hg38 -1 ", 
-                    dir, sample, "_R1_val_1_trimmed.fq -2 ", dir, sample, "_R3_val_2_trimmed.fq")
+for(sample in samples.run){
+  bismark <- paste0("$TOOLS/Bismark-0.22.3/bismark --bowtie2 --output_dir ", 
+                    out.dir, " --multicore 8 $REFERENCES/bismark/hg38 -1 ", 
+                    data.dir, "/", sample, "_R1_val_1_trimmed.fq -2 ", data.dir, "/", sample, "_R3_val_2_trimmed.fq")
   
   print(bismark)
   systme(bismark)

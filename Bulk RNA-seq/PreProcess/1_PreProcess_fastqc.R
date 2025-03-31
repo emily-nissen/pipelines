@@ -1,6 +1,6 @@
 #######################################
 # Title: Zcat and FastQC
-# Author: Emily Nissen
+# Author: Emily (Nissen) Schueddig
 # Date: 10/08/2024
 # Modified: 3/28/2025
 #######################################

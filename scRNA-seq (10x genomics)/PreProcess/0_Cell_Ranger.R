@@ -20,7 +20,7 @@ samples.run = l[[group]]
 print(samples.run)
 
 for (sample in samples.run){
-  cellranger.count <- paste0("$CRANGER count ", # $CRANGER is path to cellranger
+  cellranger.count <- paste0("$TOOLS/cellranger-7.1.0/cellranger count ", # $TOOLS is path to where cellranger is downloaded
                             "--id=", sample, " ",
                             "--transcriptome=$REFERENCES/cellranger/refdata-gex-mm10-2020-A ",
                             "--fastqs=",args[4], sample,

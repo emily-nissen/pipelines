@@ -1,6 +1,6 @@
 ---
 title: "RRBS Pipeline"
-author: "Emily Nissen"
+author: "Emily (Nissen) Schueddig"
 date: "2024-08-07"
 output: 
   github_document:
@@ -9,6 +9,8 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
+
+**Last modified:** `r Sys.Date()`
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -32,22 +34,41 @@ mkdir bismarkAlignments
 mkdir extractMethylation
 ```
 
+## Download scripts
 
-See the "PreProcess" folder for scripts that can be downloaded based on the code in the following steps.
+Download the scripts in the "PreProcess" folder. Each script is to be run one by one to ensure the steps are completed correctly. Files output at each step should be inspected before moving on to the next script.
+
+The scripts should be run in the following order:
+
+```{bash, eval = F}
+sbatch 1_Pre_Process_bcl2fastq.sh
+
+sbatch 2_Pre_Process_Cat_Trim_Fastqc.sh
+
+sbatch 3_Pre_Process_Diversity_Trim.sh
+
+sbatch 4_Pre_Process_Align_Bismark.sh
+
+sbatch 5_Pre_Process_Dedup.sh
+
+sbatch 6_Pre_Process_Extract_Methylation.sh
+```
 
 If the sequencing was done at the KUMC genomics core - they most likely used the NuGEN Ovation RRBS Methyl-Seq technology. These steps follow the steps found here: <https://github.com/nugentechnologies/NuMetRRBS>
 
-## 1_PreProcess_bcl2fastq
+More details about each script are below.
+
+## Script 1: 1_PreProcess_bcl2fastq
 
 When they use the NuGEN Ovation technology, the genomics core is not able to convert the BCL to FastQ files to take into account the additional 6 bases of random UM for duplicate marking. And we will have to do it.
 
 We use the --use-bases-mask Y*,I8Y*,Y* to indicate the first read should be generated as a fastq file, the first 8 bases of the second read are the index, and the additional bases after that (6 unknown bps) should be generated as a fastq file, and the third read should be generated as a fastq file.
 
-## 2_PreProcess_Cat_Trim_Fastqc.R
+## Script 2: 2_PreProcess_Cat_Trim_Fastqc
 
 Concatenate FastQ files if there are multiple lanes. Then trim adaptor sequence that might be present on the 3' end.
 
-## 3_PreProcess_Diversity_Trim
+## Script 3: 3_PreProcess_Diversity_Trim
 
 Following adaptor and quality trimming and prior to alignment, the additional sequence added by the diversity adaptors must be removed from the data. This trimming is performed by a custom python script trimRRBSdiversityAdaptCustomers.py provided by NuGEN in this repository. The script removes any reads that do not contain an MspI site signature YGG at the 5’ end. For paired end data an MspI site signature is required at the 5’ end of both sequences. The script accepts as input one or two fastq file strings, given either as complete filenames or as a pattern in quotes. When a pattern is given, the script will find all the filenames matching a specified pattern according to the rules used by the Unix shell (*,?). You may access the help option of this script for more details -h.
 
@@ -55,11 +76,11 @@ The script will generate new file(s) with _trimmed.fq appended to the filename. 
 
 The trimmed fastq file should be used for downstream analysis including bismark.
 
-## 4_PreProcess_Align_Bismark
+## Script 4: 4_PreProcess_Align_Bismark
 
 The data should be aligned to the genome of interest using Bismark.
 
-## 5_PreProcess_Dedup
+## Script 5: 5_PreProcess_Dedup
 
 Duplicate determination with NuDup is an optional step. Can only be done if the N6 molecular tags were added.
 <https://github.com/tecangenomics/nudup>
@@ -68,45 +89,7 @@ The N6 molecular tag is a novel approach to the unambiguous identification of un
 
 Bismark modifies read names in its output and NuDup requires that the read names in the alignment and index files match exactly. The strip_bismark_sam.sh script is provided to strip the read name changes that happen in bismark. 
 
-```{r dedup, eval = F}
-args <- commandArgs(trailingOnly=TRUE)
-group <- as.numeric(args[1])
-
-folder <- "path/to/folder/"
-dir <- paste0(folder,"bismarkAlignments/")
-ix.dir <- paste0(folder,"runfolder/Project_/")
-tmp.dir <- folder
-
-samples <- c()
-
-if(group == 1){
-  samples = samples[]
-}else if(group == 2){
-  samples = samples[]
-}
-
-for(sample in samples){
-  #  First, need to convert bam to sam
-  convert <- paste0("samtools view -h -o ", dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam ", 
-                    dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.bam")
-  print(convert)
-  system(convert)
-  
-  # Second, need to strip sam file to correct names
-  strip <- paste0("strip_bismark_sam.sh ", dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam")
-  print(strip)
-  system(strip)
-  
-  ## Third, run dedup script
-  dedup <- paste0("python nudup.py -2 -f ", ix.dir, "Project_", sample, "/", sample, "_R2.fastq -o ",
-                  sample, "_trimmed_bismark_stripped -T ", tmp.dir, "tmp", sample, " ", 
-                  dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam_stripped.sam")
-  print(dedup)
-  system(dedup)
-}
-```
-
-## 6_PreProcess_Extract_Methylation
+## Script 6: 6_PreProcess_Extract_Methylation
 
 Extract the methylation data using Bismark.
 
