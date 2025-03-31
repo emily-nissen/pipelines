@@ -1,12 +1,12 @@
 scRNA-seq Pipeline
 ================
-Emily Nissen
+Emily (Nissen) Schueddig
 2024-02-07
 
 - [Project Notes](#project-notes)
 - [Pre-processing](#pre-processing)
-  - [0_Cell_Ranger_Mkfastq](#0_cell_ranger_mkfastq)
-  - [0_Cell_Ranger](#0_cell_ranger)
+  - [(Optional): 0_Cell_Ranger_Mkfastq](#optional-0_cell_ranger_mkfastq)
+  - [Step 1: 0_Cell_Ranger](#step-1-0_cell_ranger)
 - [Analysis](#analysis)
   - [Create Seurat Objects](#create-seurat-objects)
   - [Quality control](#quality-control)
@@ -23,6 +23,8 @@ Emily Nissen
     - [Plotting](#plotting)
   - [Identifying Marker Genes](#identifying-marker-genes)
 
+**Last modified:** 2025-03-31
+
 # Project Notes
 
 Add any project notes here
@@ -34,24 +36,28 @@ the code in the following steps.
 
 These steps are specifically for data from 10x genomics.
 
-## 0_Cell_Ranger_Mkfastq
+## (Optional): 0_Cell_Ranger_Mkfastq
 
 Demultiplex - if needed. Most likely you do not need to demultiplex
 yourself. With the new NovaSeq X Plus Sequencer, the genomics core is
 able to perform the bcl2fastq on instrument for 10x single-cell data.
 
 ``` bash
-/path/to/cellranger mkfastq --id=fastq \
---run=/path/to/run/folder \
---samplesheet=/path/to/run/folder/SampleSheet-1.csv
+$TOOLS/cellranger-7.1.0/cellranger mkfastq --id=fastq \
+--run=$RUNFOLDER \
+--samplesheet=$RUNFOLDER/SampleSheet-1.csv
 ```
 
-## 0_Cell_Ranger
+## Step 1: 0_Cell_Ranger
 
 Run cell ranger count. All you need to supply is how many jobs you want
 to create (by setting the number of arrays) and the sample sheet file
 from the run. The “Sample_ID” column in this sample sheet file should
 match the names of the folders that contain the fastq files
+
+``` bash
+sbatch 0_Cell_Ranger.sh
+```
 
 # Analysis
 

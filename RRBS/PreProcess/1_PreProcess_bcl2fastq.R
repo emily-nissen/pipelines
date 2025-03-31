@@ -4,7 +4,8 @@
 # Date: 8/7/2024
 ##########################################
 
-runfolder <- "/path/to/run/folder/"
+args <- commandArgs(trailingOnly=TRUE)
+runfolder = args[1]
 
 convert <- paste0("bcl2fastq --runfolder-dir ", runfolder, 
                   " --input-dir ", runfolder, "Data/Intensities/BaseCalls/ --output-dir ",

@@ -12,10 +12,12 @@
 
 pwd; hostname; date
  
-ml load R/4.2
-export R_LIBS_USER=/kuhpc/work/biostat/e617n596/tools/R/4.2 
-ml load python/2.7
+ml R/4.4
+ml conda
+conda activate $CONDA/py311
 
-Rscript 3_PreProcess_Diversity_Trim.R $SLURM_ARRAY_TASK_ID
+PFOLDER=/path/to/project/folder
+
+Rscript 3_PreProcess_Diversity_Trim.R $SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_MAX $PFOLDER
 
 date 

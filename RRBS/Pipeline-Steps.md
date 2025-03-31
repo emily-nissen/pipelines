@@ -1,22 +1,29 @@
 RRBS Pipeline
 ================
-Emily Nissen
+Emily (Nissen) Schueddig
 2024-08-07
 
 - [Project Notes](#project-notes)
 - [Pre-processing](#pre-processing)
-  - [1_PreProcess_bcl2fastq](#1_preprocess_bcl2fastq)
-  - [2_PreProcess_Cat_Trim_Fastqc.R](#2_preprocess_cat_trim_fastqcr)
-  - [3_PreProcess_Diversity_Trim](#3_preprocess_diversity_trim)
-  - [4_PreProcess_Align_Bismark](#4_preprocess_align_bismark)
-  - [5_PreProcess_Dedup](#5_preprocess_dedup)
-  - [6_PreProcess_Extract_Methylation](#6_preprocess_extract_methylation)
+  - [Download scripts](#download-scripts)
+  - [Script 1: 1_PreProcess_bcl2fastq](#script-1-1_preprocess_bcl2fastq)
+  - [Script 2:
+    2_PreProcess_Cat_Trim_Fastqc](#script-2-2_preprocess_cat_trim_fastqc)
+  - [Script 3:
+    3_PreProcess_Diversity_Trim](#script-3-3_preprocess_diversity_trim)
+  - [Script 4:
+    4_PreProcess_Align_Bismark](#script-4-4_preprocess_align_bismark)
+  - [Script 5: 5_PreProcess_Dedup](#script-5-5_preprocess_dedup)
+  - [Script 6:
+    6_PreProcess_Extract_Methylation](#script-6-6_preprocess_extract_methylation)
 - [Analysis](#analysis)
   - [0_Deconvolute_Cell_Types](#0_deconvolute_cell_types)
   - [1_Create_Data_for_Testing](#1_create_data_for_testing)
   - [2_Test_Differential_Methylation](#2_test_differential_methylation)
   - [3_Get_Top_Variable_CpGs](#3_get_top_variable_cpgs)
   - [4_Annotate_CpGs](#4_annotate_cpgs)
+
+**Last modified:** 2025-03-31
 
 # Project Notes
 
@@ -37,14 +44,35 @@ mkdir bismarkAlignments
 mkdir extractMethylation
 ```
 
-See the “PreProcess” folder for scripts that can be downloaded based on
-the code in the following steps.
+## Download scripts
+
+Download the scripts in the “PreProcess” folder. Each script is to be
+run one by one to ensure the steps are completed correctly. Files output
+at each step should be inspected before moving on to the next script.
+
+The scripts should be run in the following order:
+
+``` bash
+sbatch 1_Pre_Process_bcl2fastq.sh
+
+sbatch 2_Pre_Process_Cat_Trim_Fastqc.sh
+
+sbatch 3_Pre_Process_Diversity_Trim.sh
+
+sbatch 4_Pre_Process_Align_Bismark.sh
+
+sbatch 5_Pre_Process_Dedup.sh
+
+sbatch 6_Pre_Process_Extract_Methylation.sh
+```
 
 If the sequencing was done at the KUMC genomics core - they most likely
 used the NuGEN Ovation RRBS Methyl-Seq technology. These steps follow
 the steps found here: <https://github.com/nugentechnologies/NuMetRRBS>
 
-## 1_PreProcess_bcl2fastq
+More details about each script are below.
+
+## Script 1: 1_PreProcess_bcl2fastq
 
 When they use the NuGEN Ovation technology, the genomics core is not
 able to convert the BCL to FastQ files to take into account the
@@ -57,12 +85,12 @@ the index, and the additional bases after that (6 unknown bps) should be
 generated as a fastq file, and the third read should be generated as a
 fastq file.
 
-## 2_PreProcess_Cat_Trim_Fastqc.R
+## Script 2: 2_PreProcess_Cat_Trim_Fastqc
 
 Concatenate FastQ files if there are multiple lanes. Then trim adaptor
 sequence that might be present on the 3’ end.
 
-## 3_PreProcess_Diversity_Trim
+## Script 3: 3_PreProcess_Diversity_Trim
 
 Following adaptor and quality trimming and prior to alignment, the
 additional sequence added by the diversity adaptors must be removed from
@@ -86,11 +114,11 @@ bases are trimmed for paired-end to prevent alignment issues).
 The trimmed fastq file should be used for downstream analysis including
 bismark.
 
-## 4_PreProcess_Align_Bismark
+## Script 4: 4_PreProcess_Align_Bismark
 
 The data should be aligned to the genome of interest using Bismark.
 
-## 5_PreProcess_Dedup
+## Script 5: 5_PreProcess_Dedup
 
 Duplicate determination with NuDup is an optional step. Can only be done
 if the N6 molecular tags were added.
@@ -113,45 +141,7 @@ read names in the alignment and index files match exactly. The
 strip_bismark_sam.sh script is provided to strip the read name changes
 that happen in bismark.
 
-``` r
-args <- commandArgs(trailingOnly=TRUE)
-group <- as.numeric(args[1])
-
-folder <- "path/to/folder/"
-dir <- paste0(folder,"bismarkAlignments/")
-ix.dir <- paste0(folder,"runfolder/Project_/")
-tmp.dir <- folder
-
-samples <- c()
-
-if(group == 1){
-  samples = samples[]
-}else if(group == 2){
-  samples = samples[]
-}
-
-for(sample in samples){
-  #  First, need to convert bam to sam
-  convert <- paste0("samtools view -h -o ", dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam ", 
-                    dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.bam")
-  print(convert)
-  system(convert)
-  
-  # Second, need to strip sam file to correct names
-  strip <- paste0("strip_bismark_sam.sh ", dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam")
-  print(strip)
-  system(strip)
-  
-  ## Third, run dedup script
-  dedup <- paste0("python nudup.py -2 -f ", ix.dir, "Project_", sample, "/", sample, "_R2.fastq -o ",
-                  sample, "_trimmed_bismark_stripped -T ", tmp.dir, "tmp", sample, " ", 
-                  dir, sample, "_R1_val_1_trimmed_bismark_bt2_pe.sam_stripped.sam")
-  print(dedup)
-  system(dedup)
-}
-```
-
-## 6_PreProcess_Extract_Methylation
+## Script 6: 6_PreProcess_Extract_Methylation
 
 Extract the methylation data using Bismark.
 
