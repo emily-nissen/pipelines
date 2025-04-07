@@ -13,10 +13,13 @@
 
 pwd; hostname; date
 
+source ~/.bashrc
+
 ml R/4.4
 
-RUNFOLDER=/path/to/run/folder/
+RUNFOLDER=/path/to/run/folder
+IMAGEFOLDER=/path/to/image/folder
 
-Rscript 0_Cell_Ranger.R $SLURM_ARRAY_TASK_ID SampleSheet.xlsx $SLURM_ARRAY_TASK_MAX $RUNFOLDER
+Rscript 0_Space_Ranger.R $SLURM_ARRAY_TASK_ID $SLURM_ARRAY_TASK_MAX $RUNFOLDER $IMAGEFOLDER $TOOLS $REFERENCES
 
 date
