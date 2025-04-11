@@ -11,7 +11,9 @@
 #SBATCH --output=mkfastq_%j.log          # Standard output and error log 
 
 pwd; hostname; date
- 
+
+source ~/.bashrc
+
 ml bcl2fastq2
 
 $TOOLS/cellranger-7.1.0/cellranger mkfastq \

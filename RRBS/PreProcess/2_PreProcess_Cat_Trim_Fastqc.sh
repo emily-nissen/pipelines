@@ -13,7 +13,7 @@
 
 pwd; hostname; date
  
-pwd; hostname; date
+source ~/.bashrc
 
 ml load R/4.4
 ml conda

@@ -13,6 +13,8 @@
 
 pwd; hostname; date
 
+source ~/.bashrc
+
 ml R/4.4
 
 RUNFOLDER=/path/to/run/folder/

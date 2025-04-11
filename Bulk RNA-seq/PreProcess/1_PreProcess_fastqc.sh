@@ -12,6 +12,8 @@
 #SBATCH --output=fastqc_%A_%a.log         # Standard output and error log 
 
 pwd; hostname; date
+
+source ~/.bashrc
  
 ml R/4.4
 ml fastqc

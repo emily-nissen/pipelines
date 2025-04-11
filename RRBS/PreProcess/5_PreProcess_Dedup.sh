@@ -13,6 +13,8 @@
 
 pwd; hostname; date
 
+source ~/.bashrc
+
 ml conda
 conda activate $CONDA/py311
 conda activate --stack bowtie2

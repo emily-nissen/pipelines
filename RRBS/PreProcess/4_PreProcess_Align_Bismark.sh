@@ -12,6 +12,8 @@
 #SBATCH --output=align_%A_%a.log         # Standard output and error log 
 
 pwd; hostname; date
+
+source ~/.bashrc
  
 ml conda
 conda activate bowtie2

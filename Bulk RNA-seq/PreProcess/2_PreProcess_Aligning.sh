@@ -12,6 +12,8 @@
 #SBATCH --output=align_%A_%a.log         # Standard output and error log 
 
 pwd; hostname; date
+
+source ~/.bashrc
  
 ml compiler/gcc/6.5
 ml bowtie2
