@@ -12,7 +12,7 @@
 
 pwd; hostname; date
  
-pwd; hostname; date
+source ~/.bashrc
 
 ml bcl2fastq2
 ml R/4.4

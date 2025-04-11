@@ -1,0 +1,21 @@
+---
+title: "Visium Analysis"
+author: "Emily (Nissen) Schueddig"
+date: "2025-04-11"
+output: 
+  github_document:
+    html_preview: TRUE
+    toc: true
+---
+
+**Last modified:** `r Sys.Date()`
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Project Notes
+
+Add any project notes here
+
+# Create Seurat objects

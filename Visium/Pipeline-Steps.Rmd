@@ -1,0 +1,44 @@
+---
+title: "Visium Pipeline"
+author: "Emily (Nissen) Schueddig"
+date: "2025-04-11"
+output: 
+  github_document:
+    html_preview: TRUE
+    toc: true
+---
+
+**Last modified:** `r Sys.Date()`
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Project Notes
+
+Add any project notes here
+
+# Pre-processing
+
+See the "PreProcess/" folder for scripts that can be downloaded based on the code in the following steps.
+
+## Step 1: 0_Space_Ranger
+
+```{bash, eval = F}
+sbatch 0_Space_Ranger.sh
+```
+
+Run Space Ranger. You will need to set \$PATH variables in the bash script.
+
+\$RUNFOLDER = path to the sequencing run
+
+\$IMAGEFOLDER = path to the imaging
+
+\$TOOLS = path to folder where Space Ranger was downloaded
+
+\$REFERENCES = path to folder where 10x transcriptome build is downloaded
+
+
+# Analysis
+
+See analysis folder for R Markdown describing analysis with Visium Data.

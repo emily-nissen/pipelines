@@ -12,6 +12,8 @@
 #SBATCH --output=trim_%A_%a.log         # Standard output and error log 
 
 pwd; hostname; date
+
+source ~/.bashrc
  
 ml load R
 ml load fastqc

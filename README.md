@@ -12,13 +12,14 @@ Includes steps for pre-processing, quality control, data set integration, and id
 
 Includes scripts for pre-processing and analysis of methylation data from the NuGEN Ovation RRBS Methyl-Seq technology. If using a different technology these steps could differ.
 
+## Visium 
+
+Includes scripts for running Space Ranger and analysis of data
+
 ## Xenium
 
 To do
 
-## Visium 
-
-To do
 
 ## miRNA-seq
 

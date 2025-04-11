@@ -13,6 +13,8 @@
 
 pwd; hostname; date
 
+source ~/.bashrc
+
 ml bowtie2
 conda activate --stack samtools
 ml R/4.4
